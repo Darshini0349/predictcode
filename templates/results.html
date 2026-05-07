@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Results - LifeGuard AI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Syne:wght@600;700;800&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+
+    <!-- NAVBAR -->
+    <nav class="navbar">
+        <div class="nav-brand" onclick="window.location.href='/'">
+            <div class="nav-logo">🏥</div>
+            <span class="nav-title">LifeGuard AI</span>
+        </div>
+        <button class="dark-toggle" onclick="toggleDark()">☀️ Light Mode</button>
+    </nav>
+
+    <!-- RESULTS PAGE -->
+    <div class="results-page">
+
+        <!-- Header -->
+        <div class="results-header">
+            <span class="section-eyebrow">Your Health Report</span>
+            <h1>Disease Risk Prediction Results</h1>
+            <p style="color:var(--text-2); font-size:15px;">Based on your lifestyle and medical inputs</p>
+        </div>
+
+        <!-- GAUGE CARDS -->
+        <div class="gauges-row" id="gaugesRow">
+            <!-- Diabetes -->
+            <div class="gauge-card">
+                <div class="gauge-title">🩸 Diabetes</div>
+                <canvas id="diabetesGauge" data-gauge data-disease="diabetes" data-score="0" data-risk="Very Low Risk"
+                    width="160" height="160"></canvas>
+                <div class="risk-badge" data-risk-badge="diabetes">—</div>
+            </div>
+
+            <!-- Heart -->
+            <div class="gauge-card">
+                <div class="gauge-title">❤️ Heart Disease</div>
+                <canvas id="heartGauge" data-gauge data-disease="heart" data-score="0" data-risk="Very Low Risk"
+                    width="160" height="160"></canvas>
+                <div class="risk-badge" data-risk-badge="heart">—</div>
+            </div>
+
+            <!-- BP -->
+            <div class="gauge-card">
+                <div class="gauge-title">💉 Blood Pressure</div>
+                <canvas id="bpGauge" data-gauge data-disease="bp" data-score="0" data-risk="Very Low Risk" width="160"
+                    height="160"></canvas>
+                <div class="risk-badge" data-risk-badge="bp">—</div>
+            </div>
+        </div>
+
+        <!-- ACTION BUTTONS -->
+        <div class="actions-row">
+            <button id="downloadPdf">📄 Download PDF Report</button>
+            <button id="findHospitals">🏥 Find Nearby Hospitals</button>
+        </div>
+
+        <!-- BREAKDOWN CHART -->
+        <div class="chart-card">
+            <h2>📊 Risk Factor Breakdown</h2>
+            <p style="color:var(--text-2);font-size:14px;margin-bottom:20px;">
+                See which lifestyle factors contributed most to your risk scores
+            </p>
+            <canvas id="breakdownChart" height="100"></canvas>
+        </div>
+
+        <!-- AI ADVICE -->
+        <div class="advice-card">
+            <h2>🤖 Personalized Health Advice</h2>
+            <div class="advice-text" id="adviceText">
+                Loading your personalized advice...
+            </div>
+        </div>
+
+        <!-- CHATBOT -->
+        <div class="chat-card">
+            <div class="chat-header">
+                <div class="chat-status"></div>
+                <h2>Ask LifeGuard AI</h2>
+            </div>
+
+            <!-- Quick questions -->
+            <div
+                style="padding: 14px 28px; display:flex; gap:8px; flex-wrap:wrap; border-bottom: 1px solid var(--card-border);">
+                <button class="quick-question"
+                    style="padding:6px 14px; background:var(--glass); border:1px solid var(--glass-border); border-radius:50px; font-size:13px; color:var(--text-2); cursor:pointer;">What
+                    should I eat?</button>
+                <button class="quick-question"
+                    style="padding:6px 14px; background:var(--glass); border:1px solid var(--glass-border); border-radius:50px; font-size:13px; color:var(--text-2); cursor:pointer;">How
+                    to reduce BP?</button>
+                <button class="quick-question"
+                    style="padding:6px 14px; background:var(--glass); border:1px solid var(--glass-border); border-radius:50px; font-size:13px; color:var(--text-2); cursor:pointer;">Best
+                    exercises for me?</button>
+                <button class="quick-question"
+                    style="padding:6px 14px; background:var(--glass); border:1px solid var(--glass-border); border-radius:50px; font-size:13px; color:var(--text-2); cursor:pointer;">Should
+                    I see a doctor?</button>
+            </div>
+
+            <div id="chatMessages"></div>
+
+            <div class="chat-input-row">
+                <textarea id="chatInput" placeholder="Ask anything about your health results..." rows="1"></textarea>
+                <button id="chatSend">Send</button>
+            </div>
+        </div>
+
+        <!-- HISTORY LINK -->
+        <div style="text-align:center; margin: 20px 0 40px;">
+            <a href="/history" style="color:var(--teal); font-size:14px; text-decoration:none;">
+                📋 View Past Predictions →
+            </a>
+        </div>
+
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <p>⚠️ This tool is for awareness only and is <strong>not a medical diagnosis</strong>. Please consult a doctor.
+        </p>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/results.js') }}"></script>
+
+    <!-- Load prediction data from sessionStorage -->
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const raw = sessionStorage.getItem("predictionResult");
+            if (!raw) return;
+
+            const data = JSON.parse(raw);
+            const results = data.results;
+
+            // Set prediction context for chatbot + PDF
+            window.PREDICTION_CONTEXT = data;
+
+            // Update gauge data attributes
+            const diseases = { diabetes: "diabetesGauge", heart: "heartGauge", bp: "bpGauge" };
+            for (const [disease, canvasId] of Object.entries(diseases)) {
+                const canvas = document.getElementById(canvasId);
+                if (canvas && results[disease]) {
+                    canvas.dataset.score = results[disease].total_score;
+                    canvas.dataset.risk = results[disease].risk;
+                }
+            }
+
+            // Show advice
+            const adviceEl = document.getElementById("adviceText");
+            if (adviceEl && data.advice) {
+                adviceEl.textContent = data.advice;
+            }
+
+            // Build factor breakdown data for chart
+            window.FACTOR_BREAKDOWN = {
+                "Age": { diabetes: results.diabetes.lifestyle_score > 0 ? 1 : 0, heart: results.heart.lifestyle_score > 0 ? 1 : 0, bp: results.bp.lifestyle_score > 0 ? 1 : 0 },
+                "Lifestyle": { diabetes: results.diabetes.lifestyle_score, heart: results.heart.lifestyle_score, bp: results.bp.lifestyle_score },
+                "Medical": { diabetes: results.diabetes.medical_score || 0, heart: results.heart.medical_score || 0, bp: results.bp.medical_score || 0 },
+            };
+
+            // Re-init gauges with real data
+            initGauges();
+            initBreakdownChart();
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>History - LifeGuard AI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Syne:wght@600;700;800&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+
+    <!-- NAVBAR -->
+    <nav class="navbar">
+        <div class="nav-brand" onclick="window.location.href='/'">
+            <div class="nav-logo">🏥</div>
+            <span class="nav-title">LifeGuard AI</span>
+        </div>
+        <button class="dark-toggle" onclick="toggleDark()">☀️ Light Mode</button>
+    </nav>
+
+    <!-- HISTORY PAGE -->
+    <div style="max-width:900px; margin:0 auto; padding:60px 20px;">
+
+        <!-- Header -->
+        <div style="text-align:center; margin-bottom:50px;">
+            <span class="section-eyebrow">Your Records</span>
+            <h1
+                style="font-family:var(--font-display); font-size:38px; font-weight:800; color:var(--white); margin-bottom:10px;">
+                Past Predictions
+            </h1>
+            <p style="color:var(--text-2); font-size:15px;">
+                Track how your health risk changes over time
+            </p>
+        </div>
+
+        <!-- Clear button -->
+        <div style="text-align:right; margin-bottom:20px;">
+            <button onclick="clearHistory()" style="padding:10px 20px; background:var(--glass); border:1px solid var(--glass-border);
+                       border-radius:50px; color:var(--text-2); font-size:13px; cursor:pointer;
+                       font-family:var(--font-body);">
+                🗑️ Clear History
+            </button>
+        </div>
+
+        <!-- History table card -->
+        <div class="chart-card" id="historyCard">
+            <div id="emptyState" style="text-align:center; padding:60px 20px; display:none;">
+                <div style="font-size:64px; margin-bottom:16px;">📋</div>
+                <h3 style="color:var(--text-2); font-weight:500;">No predictions yet</h3>
+                <p style="color:var(--text-3); font-size:14px; margin-top:8px;">
+                    Complete a health assessment to see your history here
+                </p>
+                <a href="/" style="display:inline-block; margin-top:24px; padding:12px 28px;
+                   background:linear-gradient(135deg, var(--teal), var(--teal-dim));
+                   color:var(--navy); border-radius:12px; font-weight:600;
+                   font-size:14px; text-decoration:none;">
+                    Start Assessment →
+                </a>
+            </div>
+
+            <div id="tableWrap" style="overflow-x:auto;">
+                <table class="history-table" id="historyTable">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Stage</th>
+                            <th>Age / Gender</th>
+                            <th>🩸 Diabetes</th>
+                            <th>❤️ Heart</th>
+                            <th>💉 BP</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Back button -->
+        <div style="text-align:center; margin-top:30px;">
+            <a href="/" style="color:var(--teal); font-size:14px; text-decoration:none;">
+                ← Back to Home
+            </a>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <p>⚠️ This tool is for awareness only and is <strong>not a medical diagnosis</strong>.</p>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
+    <script>
+        const RISK_COLORS = {
+            "Very Low Risk": { bg: "rgba(0,229,160,0.1)", color: "#00e5a0" },
+            "Early Risk": { bg: "rgba(245,200,66,0.1)", color: "#f5c842" },
+            "Moderate Risk": { bg: "rgba(255,140,66,0.1)", color: "#ff8c42" },
+            "High Risk": { bg: "rgba(255,77,109,0.1)", color: "#ff4d6d" },
+        };
+
+        function getRiskBadge(risk) {
+            const c = RISK_COLORS[risk] || RISK_COLORS["Very Low Risk"];
+            return `<span style="
+                background:${c.bg};
+                color:${c.color};
+                padding:4px 12px;
+                border-radius:50px;
+                font-size:12px;
+                font-weight:600;
+            ">${risk}</span>`;
+        }
+
+        function loadHistory() {
+            const history = JSON.parse(localStorage.getItem("lifeguard_history") || "[]");
+            const tbody = document.getElementById("historyBody");
+            const empty = document.getElementById("emptyState");
+            const table = document.getElementById("tableWrap");
+
+            if (!history.length) {
+                empty.style.display = "block";
+                table.style.display = "none";
+                return;
+            }
+
+            empty.style.display = "none";
+            table.style.display = "block";
+            tbody.innerHTML = "";
+
+            history.forEach(entry => {
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td>${entry.date || "—"}</td>
+                    <td>
+                        <span style="
+                            background:${entry.stage === 2 ? "rgba(245,200,66,0.1)" : "rgba(0,212,200,0.1)"};
+                            color:${entry.stage === 2 ? "#f5c842" : "var(--teal)"};
+                            padding:3px 10px; border-radius:50px; font-size:12px; font-weight:600;
+                        ">Stage ${entry.stage || 1}</span>
+                    </td>
+                    <td style="color:var(--text-2);">
+                        ${entry.age || "—"} / ${entry.gender ? entry.gender.charAt(0).toUpperCase() + entry.gender.slice(1) : "—"}
+                    </td>
+                    <td>${getRiskBadge(entry.diabetes?.risk || "—")}</td>
+                    <td>${getRiskBadge(entry.heart?.risk || "—")}</td>
+                    <td>${getRiskBadge(entry.bp?.risk || "—")}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function clearHistory() {
+            if (confirm("Are you sure you want to clear all history?")) {
+                localStorage.removeItem("lifeguard_history");
+                loadHistory();
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", loadHistory);
+    </script>
+
+</body>
+
+</html>

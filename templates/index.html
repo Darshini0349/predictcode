@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LifeGuard AI - Disease Risk Prediction</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+    <!-- NAVBAR -->
+    <nav class="navbar">
+        <div class="nav-brand">
+            <span class="nav-logo">🏥</span>
+            <span class="nav-title">LifeGuard AI</span>
+        </div>
+        <button class="dark-toggle" onclick="toggleDark()">🌙 Dark Mode</button>
+    </nav>
+
+    <!-- HERO SECTION -->
+    <section class="hero">
+        <div class="hero-content">
+            <h1 class="hero-title">Know Your Health Risk <span class="highlight">Before It's Too Late</span></h1>
+            <p class="hero-subtitle">In India, 77 million people have diabetes and don't know it. Our AI-powered system
+                predicts your risk of Diabetes, Heart Disease and Hypertension — in just 2 minutes.</p>
+        </div>
+    </section>
+
+    <!-- STAGE SELECTION -->
+    <section class="stage-section">
+        <h2 class="section-title">Choose Your Stage</h2>
+        <p class="section-subtitle">Select the option that best describes you</p>
+
+        <div class="stage-cards">
+
+            <!-- Stage 1 Card -->
+            <div class="stage-card stage-card--1" onclick="window.location.href='/stage1'">
+                <div class="stage-icon">🙋</div>
+                <div class="stage-badge">Stage 1</div>
+                <h3 class="stage-title">Never Been Diagnosed</h3>
+                <p class="stage-desc">I have never visited a doctor for diabetes, heart disease or blood pressure. I
+                    want to know my risk based on my lifestyle.</p>
+                <ul class="stage-features">
+                    <li>✅ No medical reports needed</li>
+                    <li>✅ Based on lifestyle inputs only</li>
+                    <li>✅ Takes only 2 minutes</li>
+                </ul>
+                <button class="stage-btn stage-btn--1">Start Stage 1 →</button>
+            </div>
+
+            <!-- Stage 2 Card -->
+            <div class="stage-card stage-card--2" onclick="window.location.href='/stage2'">
+                <div class="stage-icon">🩺</div>
+                <div class="stage-badge stage-badge--2">Stage 2</div>
+                <h3 class="stage-title">Already Have Medical Reports</h3>
+                <p class="stage-desc">I have already visited a doctor and know my blood sugar, blood pressure,
+                    cholesterol levels. I want a detailed analysis.</p>
+                <ul class="stage-features">
+                    <li>✅ Uses your actual medical values</li>
+                    <li>✅ More accurate prediction</li>
+                    <li>✅ Detailed health report</li>
+                </ul>
+                <button class="stage-btn stage-btn--2">Start Stage 2 →</button>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- HOW IT WORKS -->
+    <section class="how-section">
+        <h2 class="section-title">How It Works</h2>
+        <div class="steps-row">
+            <div class="step">
+                <div class="step-num">1</div>
+                <h4>Choose Your Stage</h4>
+                <p>Select Stage 1 or Stage 2 based on your situation</p>
+            </div>
+            <div class="step-arrow">→</div>
+            <div class="step">
+                <div class="step-num">2</div>
+                <h4>Fill the Form</h4>
+                <p>Answer simple questions about your lifestyle and habits</p>
+            </div>
+            <div class="step-arrow">→</div>
+            <div class="step">
+                <div class="step-num">3</div>
+                <h4>Get Results</h4>
+                <p>Receive your risk scores and AI-powered health advice</p>
+            </div>
+            <div class="step-arrow">→</div>
+            <div class="step">
+                <div class="step-num">4</div>
+                <h4>Download Report</h4>
+                <p>Save your personalized health report as a PDF</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <p>⚠️ This tool is for awareness purposes only. It is not a medical diagnosis. Please consult a doctor for
+            medical advice.</p>
+
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
+</body>
+
+</html>
