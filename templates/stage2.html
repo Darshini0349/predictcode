@@ -67,6 +67,7 @@
                         <h2>Personal Information</h2>
                         <p class="form-card-subtitle">Tell us a little about yourself</p>
 
+                        <!-- Gender -->
                         <div class="form-group">
                             <label class="form-label">Gender</label>
                             <div class="option-cards">
@@ -83,12 +84,14 @@
                             </div>
                         </div>
 
+                        <!-- Age -->
                         <div class="form-group">
                             <label class="form-label" for="age">Age</label>
                             <input type="number" id="age" name="age" class="form-input" placeholder="Enter your age"
                                 min="10" max="100" required>
                         </div>
 
+                        <!-- BMI Calculator -->
                         <div class="form-group">
                             <label class="form-label">Height & Weight (for BMI)</label>
                             <div class="bmi-row">
@@ -101,6 +104,7 @@
                             <input type="hidden" id="bmi" name="bmi">
                         </div>
 
+                        <!-- Family History -->
                         <div class="form-group">
                             <label class="form-label">Family History of Diabetes / Heart / BP?</label>
                             <div class="option-cards">
@@ -125,6 +129,7 @@
                         <h2>Lifestyle Habits</h2>
                         <p class="form-card-subtitle">Tell us about your daily habits</p>
 
+                        <!-- Smoking -->
                         <div class="form-group">
                             <label class="form-label">Smoking Status</label>
                             <div class="option-cards">
@@ -146,6 +151,7 @@
                             </div>
                         </div>
 
+                        <!-- Alcohol -->
                         <div class="form-group">
                             <label class="form-label">Alcohol Consumption</label>
                             <div class="option-cards">
@@ -167,6 +173,7 @@
                             </div>
                         </div>
 
+                        <!-- Exercise -->
                         <div class="form-group">
                             <label class="form-label">Physical Activity</label>
                             <div class="option-cards">
@@ -188,6 +195,7 @@
                             </div>
                         </div>
 
+                        <!-- Sleep -->
                         <div class="form-group">
                             <label class="form-label">Sleep Duration</label>
                             <div class="option-cards">
@@ -203,14 +211,221 @@
                                 </label>
                                 <label class="option-card">
                                     <input type="radio" name="sleep" value="less_than_5">
-                                    <span class="option-card-icon">😩</span>
-                                    <footer class="footer">
-                                        <p>⚠️ This tool is for awareness only and is <strong>not a medical
-                                                diagnosis</strong>.</p>
-                                    </footer>
+                                    <span class="option-card-icon">🥺</span>
+                                    <span class="option-card-label">Less than 5</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-                                    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
-                                    <script src="{{ url_for('static', filename='js/form.js') }}"></script>
+                <!-- STEP 3: Diet -->
+                <div class="form-step">
+                    <div class="form-card">
+                        <h2>Diet & Nutrition</h2>
+                        <p class="form-card-subtitle">Tell us about your eating habits</p>
+
+                        <div class="form-group">
+                            <label class="form-label">Overall Diet Type</label>
+                            <div class="option-cards">
+                                <label class="option-card">
+                                    <input type="radio" name="diet_type" value="healthy" required>
+                                    <span class="option-card-icon">🥗</span>
+                                    <span class="option-card-label">Healthy</span>
+                                </label>
+                                <label class="option-card">
+                                    <input type="radio" name="diet_type" value="moderate">
+                                    <span class="option-card-icon">🍱</span>
+                                    <span class="option-card-label">Moderate</span>
+                                </label>
+                                <label class="option-card">
+                                    <input type="radio" name="diet_type" value="poor">
+                                    <span class="option-card-icon">🍔</span>
+                                    <span class="option-card-label">Poor</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Vegetable & Fruit Intake</label>
+                            <div class="option-cards">
+                                <label class="option-card">
+                                    <input type="radio" name="veg_fruit" value="daily" required>
+                                    <span class="option-card-icon">🥦</span>
+                                    <span class="option-card-label">Daily</span>
+                                </label>
+                                <label class="option-card">
+                                    <input type="radio" name="veg_fruit" value="3_4_week">
+                                    <span class="option-card-icon">🥕</span>
+                                    <span class="option-card-label">3-4/week</span>
+                                </label>
+                                <label class="option-card">
+                                    <input type="radio" name="veg_fruit" value="rarely">
+                                    <span class="option-card-icon">🍟</span>
+                                    <span class="option-card-label">Rarely</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Junk / Fast Food Consumption</label>
+                            <div class="option-cards">
+                                <label class="option-card">
+                                    <input type="radio" name="junk_food" value="rarely" required>
+                                    <span class="option-card-icon">✅</span>
+                                    <span class="option-card-label">Rarely</span>
+                                </label>
+                                <label class="option-card">
+                                    <input type="radio" name="junk_food" value="sometimes">
+                                    <span class="option-card-icon">⚠️</span>
+                                    <span class="option-card-label">Sometimes</span>
+                                </label>
+                                <label class="option-card">
+                                    <input type="radio" name="junk_food" value="frequently">
+                                    <span class="option-card-icon">❌</span>
+                                    <span class="option-card-label">Frequently</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Sugary Drinks</label>
+                            <div class="option-cards">
+                                <label class="option-card">
+                                    <input type="radio" name="sugar_drinks" value="rarely" required>
+                                    <span class="option-card-icon">💧</span>
+                                    <span class="option-card-label">Rarely</span>
+                                </label>
+                                <label class="option-card">
+                                    <input type="radio" name="sugar_drinks" value="occasionally">
+                                    <span class="option-card-icon">🧃</span>
+                                    <span class="option-card-label">Occasionally</span>
+                                </label>
+                                <label class="option-card">
+                                    <input type="radio" name="sugar_drinks" value="daily">
+                                    <span class="option-card-icon">🥤</span>
+                                    <span class="option-card-label">Daily</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STEP 4: Symptoms -->
+                <div class="form-step">
+                    <div class="form-card">
+                        <h2>Current Symptoms</h2>
+                        <p class="form-card-subtitle">Select any symptoms you are currently experiencing</p>
+
+                        <div class="form-group">
+                            <div class="symptom-grid">
+                                <label class="symptom-check symptom-check--none">
+                                    <input type="checkbox" name="none_of_the_above" class="symptom-checkbox symptom-none">
+                                    <span class="symptom-check-label">✅ None of the above</span>
+                                </label>
+                                <label class="symptom-check">
+                                    <input type="checkbox" name="fatigue" class="symptom-checkbox">
+                                    <span class="symptom-check-label">😴 Fatigue / Tiredness</span>
+                                </label>
+                                <label class="symptom-check">
+                                    <input type="checkbox" name="excessive_thirst" class="symptom-checkbox">
+                                    <span class="symptom-check-label">💧 Excessive Thirst</span>
+                                </label>
+                                <label class="symptom-check">
+                                    <input type="checkbox" name="dizziness" class="symptom-checkbox">
+                                    <span class="symptom-check-label">💫 Dizziness</span>
+                                </label>
+                                <label class="symptom-check">
+                                    <input type="checkbox" name="chest_pain" class="symptom-checkbox">
+                                    <span class="symptom-check-label">Chest Pain</span>
+                                </label>
+                            </div>
+                            <div id="symptomCount" style="margin-top:12px; font-size:13px; color:#64748b;">0 symptoms
+                                selected</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STEP 5: Medical Values -->
+                <div class="form-step">
+                    <div class="form-card">
+                        <h2>Medical Values</h2>
+                        <p class="form-card-subtitle">Enter recent measurements for a more accurate Stage 2 score</p>
+
+                        <div class="form-group">
+                            <label class="form-label" for="systolic">Blood Pressure (Systolic)</label>
+                            <input type="number" id="systolic" name="systolic" class="form-input"
+                                placeholder="e.g., 120" min="70" max="250" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="diastolic">Blood Pressure (Diastolic)</label>
+                            <input type="number" id="diastolic" name="diastolic" class="form-input"
+                                placeholder="e.g., 80" min="40" max="150" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="fasting_glucose">Fasting Glucose (mg/dL)</label>
+                            <input type="number" id="fasting_glucose" name="fasting_glucose" class="form-input"
+                                placeholder="e.g., 95" min="40" max="400" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="hba1c">HbA1c (%)</label>
+                            <input type="number" id="hba1c" name="hba1c" class="form-input" step="0.1"
+                                placeholder="e.g., 5.6" min="3" max="15" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="cholesterol">Total Cholesterol (mg/dL)</label>
+                            <input type="number" id="cholesterol" name="cholesterol" class="form-input"
+                                placeholder="e.g., 180" min="80" max="500" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="heart_rate">Resting Heart Rate (bpm)</label>
+                            <input type="number" id="heart_rate" name="heart_rate" class="form-input"
+                                placeholder="e.g., 72" min="30" max="220" required>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STEP 6: Review -->
+                <div class="form-step">
+                    <div class="form-card">
+                        <h2>Ready to Get Your Results!</h2>
+                        <p class="form-card-subtitle">Click the button below to analyze your lifestyle + medical values
+                            and get your personalized disease risk prediction powered by AI.</p>
+
+                        <div style="text-align:center; padding: 30px 0;">
+                            <div style="font-size: 64px; margin-bottom: 16px;">🏥</div>
+                            <p style="color: var(--text-2); font-size: 15px; line-height: 1.7;">
+                                Our AI will analyze your inputs using a clinically validated scoring system and provide
+                                personalized health advice powered by Claude AI.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- NAV BUTTONS -->
+                <div class="form-nav">
+                    <button type="button" id="backBtn" class="btn btn-secondary" style="display:none">← Back</button>
+                    <button type="button" id="nextBtn" class="btn btn-primary">Next →</button>
+                    <button type="button" id="submitBtn" class="btn btn-submit" style="display:none">🔍 Get My
+                        Results</button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <p>⚠️ This tool is for awareness purposes only and is <strong>not a medical diagnosis</strong>.</p>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/form.js') }}"></script>
 
 </body>
 

@@ -195,13 +195,42 @@ function initSymptomCounter() {
     if (!symptomBoxes.length || !counter) return;
 
     function updateCount() {
-        const checked = document.querySelectorAll(".symptom-checkbox:checked").length;
+        const none = document.querySelector(".symptom-none");
+        if (none?.checked) {
+            counter.textContent = "No symptoms selected";
+            counter.style.color = "#6b7280";
+            return;
+        }
+        const checked = document.querySelectorAll(".symptom-checkbox:checked:not(.symptom-none)").length;
         counter.textContent = `${checked} symptom${checked !== 1 ? "s" : ""} selected`;
         counter.style.color = checked > 0 ? "#ff4d6d" : "#6b7280";
     }
 
     symptomBoxes.forEach(box => box.addEventListener("change", updateCount));
     updateCount();
+}
+
+function initNoneOfAboveSymptoms() {
+    const none = document.querySelector(".symptom-none");
+    if (!none) return;
+    const others = Array.from(document.querySelectorAll(".symptom-checkbox:not(.symptom-none)"));
+
+    function syncFromNone() {
+        if (!none.checked) return;
+        others.forEach(box => { box.checked = false; });
+    }
+
+    function syncFromOthers() {
+        const anyOtherChecked = others.some(box => box.checked);
+        if (anyOtherChecked) none.checked = false;
+    }
+
+    none.addEventListener("change", () => {
+        syncFromNone();
+    });
+    others.forEach(box => box.addEventListener("change", () => {
+        syncFromOthers();
+    }));
 }
 
 function initCardOptions() {
@@ -311,6 +340,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     initBmiCalculator();
     initSymptomCounter();
+    initNoneOfAboveSymptoms();
     initCardOptions();
     initFormSubmission();
 

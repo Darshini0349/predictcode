@@ -155,16 +155,17 @@ def calculate_scores(data):
         diabetes += 2; heart += 1; bp += 1
 
     # 11. SYMPTOMS
-    if _to_bool(data.get("fatigue"), False):
-        diabetes += 2; heart += 1; bp += 1
-    if _to_bool(data.get("excessive_thirst"), False):
-        diabetes += 3
-    if _to_bool(data.get("dizziness"), False):
-        diabetes += 1; heart += 1; bp += 2
-    if _to_bool(data.get("chest_pain"), False):
-        heart += 4; bp += 2
-        if is_female:
-            heart += 1
+    if not _to_bool(data.get("none_of_the_above"), False) and not _to_bool(data.get("none_of_above"), False):
+        if _to_bool(data.get("fatigue"), False):
+            diabetes += 2; heart += 1; bp += 1
+        if _to_bool(data.get("excessive_thirst"), False):
+            diabetes += 3
+        if _to_bool(data.get("dizziness"), False):
+            diabetes += 1; heart += 1; bp += 2
+        if _to_bool(data.get("chest_pain"), False):
+            heart += 4; bp += 2
+            if is_female:
+                heart += 1
 
     # 12. FAMILY HISTORY
     if _to_bool(data.get("family_history"), False):
