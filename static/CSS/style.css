@@ -1043,6 +1043,44 @@ body.light .results-header h1 {
     margin-top: 12px;
 }
 
+.mini-pie-card {
+    width: 220px;
+    padding: 22px 18px 26px;
+}
+
+.mini-pie-wrap {
+    position: relative;
+    height: 150px;
+    margin: 0 auto;
+    max-width: 170px;
+}
+
+.mini-pie-stats {
+    margin-top: 14px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-2);
+    line-height: 1.45;
+}
+
+.mini-pie-pts {
+    font-size: 14px;
+    color: var(--text-1);
+    margin-bottom: 4px;
+}
+
+.mini-pie-pct {
+    font-size: 12px;
+    color: var(--text-2);
+}
+
+.mini-pie-formula {
+    margin-top: 8px;
+    font-size: 10px;
+    color: var(--text-3);
+    opacity: 0.95;
+}
+
 /* Chart section */
 .chart-card {
     background: var(--card-bg);
@@ -1434,6 +1472,11 @@ body.light .chat-header h2 {
 
     .gauge-card {
         width: 160px;
+    }
+
+    .mini-pie-card {
+        width: 100%;
+        max-width: 280px;
     }
 
     .actions-row {

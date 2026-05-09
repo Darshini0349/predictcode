@@ -33,29 +33,30 @@
             <p style="color:var(--text-2); font-size:15px;">Based on your lifestyle and medical inputs</p>
         </div>
 
-        <!-- GAUGE CARDS -->
-        <div class="gauges-row" id="gaugesRow">
-            <!-- Diabetes -->
-            <div class="gauge-card">
+        <!-- MINI PIE CHARTS: your score vs remaining safe headroom (max = worst-case total from scoring rules) -->
+        <div class="gauges-row risk-pies-row" id="riskPiesRow">
+            <div class="gauge-card mini-pie-card">
                 <div class="gauge-title">🩸 Diabetes</div>
-                <canvas id="diabetesGauge" data-gauge data-disease="diabetes" data-score="0" data-risk="Very Low Risk"
-                    width="160" height="160"></canvas>
+                <div class="mini-pie-wrap">
+                    <canvas id="diabetesPie" width="150" height="150"></canvas>
+                </div>
+                <div class="mini-pie-stats" id="diabetesPieStats"></div>
                 <div class="risk-badge" data-risk-badge="diabetes">—</div>
             </div>
-
-            <!-- Heart -->
-            <div class="gauge-card">
+            <div class="gauge-card mini-pie-card">
                 <div class="gauge-title">❤️ Heart Disease</div>
-                <canvas id="heartGauge" data-gauge data-disease="heart" data-score="0" data-risk="Very Low Risk"
-                    width="160" height="160"></canvas>
+                <div class="mini-pie-wrap">
+                    <canvas id="heartPie" width="150" height="150"></canvas>
+                </div>
+                <div class="mini-pie-stats" id="heartPieStats"></div>
                 <div class="risk-badge" data-risk-badge="heart">—</div>
             </div>
-
-            <!-- BP -->
-            <div class="gauge-card">
+            <div class="gauge-card mini-pie-card">
                 <div class="gauge-title">💉 Blood Pressure</div>
-                <canvas id="bpGauge" data-gauge data-disease="bp" data-score="0" data-risk="Very Low Risk" width="160"
-                    height="160"></canvas>
+                <div class="mini-pie-wrap">
+                    <canvas id="bpPie" width="150" height="150"></canvas>
+                </div>
+                <div class="mini-pie-stats" id="bpPieStats"></div>
                 <div class="risk-badge" data-risk-badge="bp">—</div>
             </div>
         </div>
@@ -145,16 +146,6 @@
             // Set prediction context for chatbot + PDF
             window.PREDICTION_CONTEXT = data;
 
-            // Update gauge data attributes
-            const diseases = { diabetes: "diabetesGauge", heart: "heartGauge", bp: "bpGauge" };
-            for (const [disease, canvasId] of Object.entries(diseases)) {
-                const canvas = document.getElementById(canvasId);
-                if (canvas && results[disease]) {
-                    canvas.dataset.score = results[disease].total_score;
-                    canvas.dataset.risk = results[disease].risk;
-                }
-            }
-
             // Show advice
             const adviceEl = document.getElementById("adviceText");
             if (adviceEl && data.advice) {
@@ -168,8 +159,7 @@
                 "Medical": { diabetes: results.diabetes.medical_score || 0, heart: results.heart.medical_score || 0, bp: results.bp.medical_score || 0 },
             };
 
-            // Re-init gauges with real data
-            initGauges();
+            initRiskPies(results, data);
             initBreakdownChart();
         });
     </script>

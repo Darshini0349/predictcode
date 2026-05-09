@@ -58,6 +58,56 @@ def score_to_risk(score):
         return "High Risk"
 
 
+def get_score_maxima(gender, stage=1):
+    """
+    Maximum total points possible per disease for the same gender + stage, using
+    the worst-case inputs that maximize calculate_scores (+ calculate_medical_scores for stage 2).
+    Used as the pie-chart denominator: risk % = score/max*100, safe % = (max-score)/max*100.
+    """
+    gender = _norm_choice(gender, "male")
+    worst_life = {
+        "gender": gender,
+        "age": 100,
+        "bmi": 45.0,
+        "sleep": "less_than_5",
+        "smoking": "regular",
+        "alcohol": "regular",
+        "exercise": "none",
+        "diet_type": "poor",
+        "veg_fruit": "rarely",
+        "junk_food": "frequently",
+        "sugar_drinks": "daily",
+        "none_of_the_above": False,
+        "none_of_above": False,
+        "fatigue": True,
+        "excessive_thirst": True,
+        "dizziness": True,
+        "chest_pain": True,
+        "family_history": True,
+    }
+    ls = calculate_scores(worst_life)
+    out = {
+        "diabetes": ls["diabetes"]["score"],
+        "heart": ls["heart"]["score"],
+        "bp": ls["bp"]["score"],
+    }
+    if _to_int(stage, 1) == 2:
+        worst_med = {
+            "gender": gender,
+            "systolic": 200,
+            "diastolic": 110,
+            "fasting_glucose": 400,
+            "hba1c": 15.0,
+            "cholesterol": 500,
+            "heart_rate": 220,
+        }
+        ms = calculate_medical_scores(worst_med)
+        out["diabetes"] += ms["diabetes"]
+        out["heart"] += ms["heart"]
+        out["bp"] += ms["bp"]
+    return out
+
+
 def calculate_scores(data):
     diabetes = 0
     heart    = 0
@@ -273,6 +323,7 @@ def predict(data, stage=1):
     lifestyle = calculate_scores(data)
 
     stage_int = _to_int(stage, 1)
+    score_max = get_score_maxima(data.get("gender"), stage_int)
     if stage_int == 2:
         medical = calculate_medical_scores(data)
 
@@ -282,6 +333,7 @@ def predict(data, stage=1):
 
         return {
             "stage": 2,
+            "score_max": score_max,
             "diabetes": {
                 "lifestyle_score": lifestyle["diabetes"]["score"],
                 "medical_score":   medical["diabetes"],
@@ -304,6 +356,7 @@ def predict(data, stage=1):
 
     return {
         "stage": 1,
+        "score_max": score_max,
         "diabetes": {
             "lifestyle_score": lifestyle["diabetes"]["score"],
             "medical_score":   0,

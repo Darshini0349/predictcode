@@ -1,12 +1,5 @@
 // results.js
 
-const GAUGE_CONFIG = {
-    maxScore: 30,
-    radius: 70,
-    strokeWidth: 12,
-    animDuration: 1500,
-};
-
 const RISK_COLORS = {
     "Very Low Risk": { stroke: "#22c55e", bg: "#dcfce7", text: "#15803d" },
     "Early Risk": { stroke: "#eab308", bg: "#fef9c3", text: "#a16207" },
@@ -14,85 +7,124 @@ const RISK_COLORS = {
     "High Risk": { stroke: "#ef4444", bg: "#fee2e2", text: "#b91c1c" },
 };
 
-function buildGauge(canvasId, score, maxScore, riskLabel) {
-    const canvas = document.getElementById(canvasId);
-    if (!canvas) return;
+/** Matches app.predict.get_score_maxima (for old sessionStorage before score_max existed). */
+const FALLBACK_SCORE_MAX = {
+    1: {
+        female: { diabetes: 29, heart: 33, bp: 29 },
+        male: { diabetes: 29, heart: 28, bp: 27 },
+    },
+    2: {
+        female: { diabetes: 35, heart: 40, bp: 37 },
+        male: { diabetes: 35, heart: 34, bp: 34 },
+    },
+};
 
-    const ctx = canvas.getContext("2d");
-    const cx = canvas.width / 2;
-    const cy = canvas.height / 2;
-    const r = GAUGE_CONFIG.radius;
-    const sw = GAUGE_CONFIG.strokeWidth;
-    const colors = RISK_COLORS[riskLabel] || RISK_COLORS["Very Low Risk"];
+const PIE_RISK_PALETTE = {
+    diabetes: { fill: "rgba(239, 68, 68, 0.92)", border: "rgba(239, 68, 68, 0.45)" },
+    heart: { fill: "rgba(249, 115, 22, 0.92)", border: "rgba(249, 115, 22, 0.45)" },
+    bp: { fill: "rgba(59, 130, 246, 0.92)", border: "rgba(59, 130, 246, 0.45)" },
+};
 
-    const startAngle = Math.PI * 0.75;
-    const endAngle = Math.PI * 2.25;
-    const fullArc = endAngle - startAngle;
-    const targetArc = fullArc * Math.min(score / maxScore, 1);
+const SAFE_SLICE = { fill: "rgba(34, 197, 94, 0.9)", border: "rgba(34, 197, 94, 0.4)" };
 
-    let startTime = null;
+let breakdownChartRef = null;
+let riskPieChartRefs = [];
 
-    function easeOutCubic(t) {
-        return 1 - Math.pow(1 - t, 3);
-    }
-
-    function draw(currentArc) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        ctx.beginPath();
-        ctx.arc(cx, cy, r, startAngle, endAngle);
-        ctx.strokeStyle = "#e5e7eb";
-        ctx.lineWidth = sw;
-        ctx.lineCap = "round";
-        ctx.stroke();
-
-        if (currentArc > 0) {
-            ctx.beginPath();
-            ctx.arc(cx, cy, r, startAngle, startAngle + currentArc);
-            ctx.strokeStyle = colors.stroke;
-            ctx.lineWidth = sw;
-            ctx.lineCap = "round";
-            ctx.stroke();
-        }
-
-        ctx.fillStyle = colors.text;
-        ctx.font = "bold 28px 'Segoe UI', sans-serif";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText(Math.round((currentArc / fullArc) * score), cx, cy - 10);
-
-        ctx.fillStyle = "#6b7280";
-        ctx.font = "12px 'Segoe UI', sans-serif";
-        ctx.fillText("score", cx, cy + 14);
-    }
-
-    function animate(timestamp) {
-        if (!startTime) startTime = timestamp;
-        const elapsed = timestamp - startTime;
-        const progress = Math.min(elapsed / GAUGE_CONFIG.animDuration, 1);
-        const easedArc = easeOutCubic(progress) * targetArc;
-        draw(easedArc);
-        if (progress < 1) requestAnimationFrame(animate);
-    }
-
-    requestAnimationFrame(animate);
+function resolveScoreMax(results, apiPayload) {
+    if (results && results.score_max) return results.score_max;
+    const g = String(apiPayload?.gender || "male").toLowerCase() === "female" ? "female" : "male";
+    const st = apiPayload?.stage === 2 || results?.stage === 2 ? 2 : 1;
+    return FALLBACK_SCORE_MAX[st][g];
 }
 
-function initGauges() {
-    const gauges = document.querySelectorAll("[data-gauge]");
-    gauges.forEach(el => {
-        const id = el.id;
-        const score = parseInt(el.dataset.score, 10);
-        const risk = el.dataset.risk;
-        buildGauge(id, score, GAUGE_CONFIG.maxScore, risk);
+function setRiskBadge(diseaseKey, riskLabel) {
+    const badge = document.querySelector(`[data-risk-badge="${diseaseKey}"]`);
+    if (!badge) return;
+    const colors = RISK_COLORS[riskLabel] || RISK_COLORS["Very Low Risk"];
+    badge.style.backgroundColor = colors.bg;
+    badge.style.color = colors.text;
+    badge.textContent = riskLabel;
+}
 
-        const badge = document.querySelector(`[data-risk-badge="${el.dataset.disease}"]`);
-        if (badge) {
-            const colors = RISK_COLORS[risk] || RISK_COLORS["Very Low Risk"];
-            badge.style.backgroundColor = colors.bg;
-            badge.style.color = colors.text;
-            badge.textContent = risk;
+/**
+ * Pie = your score (disease color) vs remaining safe headroom (green).
+ * risk% = min(score,max)/max*100, safe% = max(0,(max-score)/max*100 — same denominator (max from predict.py).
+ */
+function initRiskPies(results, apiPayload) {
+    if (!results || typeof Chart === "undefined") return;
+
+    const scoreMax = resolveScoreMax(results, apiPayload);
+    const diseases = [
+        { key: "diabetes", canvasId: "diabetesPie", statsId: "diabetesPieStats" },
+        { key: "heart", canvasId: "heartPie", statsId: "heartPieStats" },
+        { key: "bp", canvasId: "bpPie", statsId: "bpPieStats" },
+    ];
+
+    riskPieChartRefs.forEach((c) => {
+        try {
+            c.destroy();
+        } catch (_) {}
+    });
+    riskPieChartRefs = [];
+
+    diseases.forEach(({ key, canvasId, statsId }) => {
+        const canvas = document.getElementById(canvasId);
+        const statsEl = document.getElementById(statsId);
+        const block = results[key];
+        if (!canvas || !block) return;
+
+        const max = Math.max(1, scoreMax[key] ?? 1);
+        const score = Number(block.total_score) || 0;
+        const riskSlice = Math.min(Math.max(0, score), max);
+        const safeSlice = Math.max(0, max - score);
+
+        const riskPct = Math.min(100, Math.round((score / max) * 100));
+        const safePct = Math.max(0, Math.round(((max - score) / max) * 100));
+
+        if (statsEl) {
+            statsEl.innerHTML = `
+                <div class="mini-pie-pts"><strong>${score}</strong> / ${max} pts</div>
+                <div class="mini-pie-pct">Your score: ${riskPct}% of max · Safe headroom: ${safePct}%</div>
+                <div class="mini-pie-formula">risk% = (score / max)×100 · safe% = ((max - score) / max)×100</div>
+            `;
         }
+
+        setRiskBadge(key, block.risk);
+
+        const pal = PIE_RISK_PALETTE[key];
+        const chart = new Chart(canvas, {
+            type: "doughnut",
+            data: {
+                labels: ["Your score (pts)", "Safe headroom (pts)"],
+                datasets: [
+                    {
+                        data: riskSlice + safeSlice > 0 ? [riskSlice, safeSlice] : [0, max],
+                        backgroundColor: [pal.fill, SAFE_SLICE.fill],
+                        borderColor: [pal.border, SAFE_SLICE.border],
+                        borderWidth: 2,
+                        hoverOffset: 4,
+                    },
+                ],
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                cutout: "58%",
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label(ctx) {
+                                const v = ctx.raw;
+                                const pct = max > 0 ? Math.round((v / max) * 100) : 0;
+                                return ` ${ctx.label}: ${v} pts (${pct}% of max)`;
+                            },
+                        },
+                    },
+                },
+            },
+        });
+        riskPieChartRefs.push(chart);
     });
 }
 
@@ -100,13 +132,20 @@ function initBreakdownChart() {
     const ctx = document.getElementById("breakdownChart");
     if (!ctx || typeof Chart === "undefined") return;
 
+    if (breakdownChartRef) {
+        breakdownChartRef.destroy();
+        breakdownChartRef = null;
+    }
+
     const factorData = window.FACTOR_BREAKDOWN || {};
     const labels = Object.keys(factorData);
-    const diabetes = labels.map(k => factorData[k].diabetes || 0);
-    const heart = labels.map(k => factorData[k].heart || 0);
-    const bp = labels.map(k => factorData[k].bp || 0);
+    if (!labels.length) return;
 
-    new Chart(ctx, {
+    const diabetes = labels.map((k) => factorData[k].diabetes || 0);
+    const heart = labels.map((k) => factorData[k].heart || 0);
+    const bp = labels.map((k) => factorData[k].bp || 0);
+
+    breakdownChartRef = new Chart(ctx, {
         type: "bar",
         data: {
             labels,
@@ -122,14 +161,14 @@ function initBreakdownChart() {
             animation: { duration: 1200, easing: "easeOutQuart" },
             plugins: {
                 legend: { position: "top", labels: { font: { size: 13 }, padding: 16 } },
-                tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: +${ctx.raw} pts` } },
+                tooltip: { callbacks: { label: (c) => ` ${c.dataset.label}: +${c.raw} pts` } },
             },
             scales: {
                 x: { grid: { display: false }, ticks: { font: { size: 11 } } },
                 y: {
                     beginAtZero: true,
                     grid: { color: "rgba(0,0,0,0.05)" },
-                    ticks: { stepSize: 1, font: { size: 11 }, callback: val => `+${val}` },
+                    ticks: { stepSize: 1, font: { size: 11 }, callback: (val) => `+${val}` },
                     title: { display: true, text: "Points added to score", font: { size: 12 }, color: "#6b7280" },
                 },
             },
@@ -149,7 +188,7 @@ function initChatbot() {
 
     if (!input || !box) return;
 
-    input.addEventListener("keydown", e => {
+    input.addEventListener("keydown", (e) => {
         if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
             sendMessage();
@@ -158,7 +197,7 @@ function initChatbot() {
 
     sendBtn?.addEventListener("click", sendMessage);
 
-    document.querySelectorAll(".quick-question").forEach(btn => {
+    document.querySelectorAll(".quick-question").forEach((btn) => {
         btn.addEventListener("click", () => {
             input.value = btn.textContent.trim();
             sendMessage();
@@ -230,7 +269,6 @@ async function sendMessage() {
 
         const data = await response.json();
         appendMessage("assistant", data.reply || "Sorry, I could not get a response.");
-
     } catch (err) {
         removeTypingIndicator();
         appendMessage("assistant", "Sorry, something went wrong. Please try again.");
@@ -281,7 +319,6 @@ function initPdfDownload() {
                 btn.disabled = false;
                 btn.textContent = "📄 Download PDF Report";
             }, 3000);
-
         } catch (err) {
             console.error("PDF error:", err);
             btn.textContent = "Download failed. Try again.";
@@ -304,13 +341,13 @@ function initHospitalFinder() {
         btn.disabled = true;
 
         navigator.geolocation.getCurrentPosition(
-            pos => {
+            (pos) => {
                 const { latitude, longitude } = pos.coords;
                 window.open(`https://www.google.com/maps/search/hospitals/@${latitude},${longitude},14z`, "_blank");
                 btn.textContent = "🏥 Find Nearby Hospitals";
                 btn.disabled = false;
             },
-            err => {
+            () => {
                 window.open("https://www.google.com/maps/search/hospitals+near+me", "_blank");
                 btn.textContent = "🏥 Find Nearby Hospitals";
                 btn.disabled = false;
@@ -353,8 +390,6 @@ function escapeHtml(str) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-    initGauges();
-    initBreakdownChart();
     initChatbot();
     initPdfDownload();
     initHospitalFinder();
