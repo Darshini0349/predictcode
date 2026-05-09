@@ -69,12 +69,29 @@
                             <th>Date</th>
                             <th>Stage</th>
                             <th>Age / Gender</th>
-                            <th>🩸 Diabetes</th>
-                            <th>❤️ Heart</th>
-                            <th>💉 BP</th>
+                            <th>Diabetes</th>
+                            <th> Heart</th>
+                            <th> BP</th>
                         </tr>
                     </thead>
                     <tbody id="historyBody">
+                        {% for p in predictions %}
+                        <tr>
+                            <td>{{ p.created_at or "—" }}</td>
+                            <td>
+                                <span class="stage-pill" data-stage="{{ p.stage or 1 }}">Stage {{ p.stage or 1 }}</span>
+                            </td>
+                            <td style="color:var(--text-2);">
+                                {{ p.age or "—" }} / {{ (p.gender or "—")|capitalize }}
+                            </td>
+                            <td><span class="risk-pill" data-risk="{{ p.diabetes_risk or '—' }}">{{ p.diabetes_risk or
+                                    "—" }}</span></td>
+                            <td><span class="risk-pill" data-risk="{{ p.heart_risk or '—' }}">{{ p.heart_risk or "—"
+                                    }}</span></td>
+                            <td><span class="risk-pill" data-risk="{{ p.bp_risk or '—' }}">{{ p.bp_risk or "—" }}</span>
+                            </td>
+                        </tr>
+                        {% endfor %}
                     </tbody>
                 </table>
             </div>
@@ -103,64 +120,64 @@
             "High Risk": { bg: "rgba(255,77,109,0.1)", color: "#ff4d6d" },
         };
 
-        function getRiskBadge(risk) {
-            const c = RISK_COLORS[risk] || RISK_COLORS["Very Low Risk"];
-            return `<span style="
-                background:${c.bg};
-                color:${c.color};
-                padding:4px 12px;
-                border-radius:50px;
-                font-size:12px;
-                font-weight:600;
-            ">${risk}</span>`;
+        function applyRiskPills() {
+            document.querySelectorAll(".risk-pill").forEach(el => {
+                const risk = el.dataset.risk || el.textContent.trim();
+                const c = RISK_COLORS[risk] || { bg: "rgba(148,163,184,0.12)", color: "var(--text-2)" };
+                el.style.background = c.bg;
+                el.style.color = c.color;
+                el.style.padding = "4px 12px";
+                el.style.borderRadius = "50px";
+                el.style.fontSize = "12px";
+                el.style.fontWeight = "600";
+                el.textContent = risk || "—";
+            });
         }
 
-        function loadHistory() {
-            const history = JSON.parse(localStorage.getItem("lifeguard_history") || "[]");
+        function applyStagePills() {
+            document.querySelectorAll(".stage-pill").forEach(el => {
+                const stage = parseInt(el.dataset.stage || "1", 10);
+                el.style.background = stage === 2 ? "rgba(245,200,66,0.1)" : "rgba(0,212,200,0.1)";
+                el.style.color = stage === 2 ? "#f5c842" : "var(--teal)";
+                el.style.padding = "3px 10px";
+                el.style.borderRadius = "50px";
+                el.style.fontSize = "12px";
+                el.style.fontWeight = "600";
+            });
+        }
+
+        function updateEmptyState() {
             const tbody = document.getElementById("historyBody");
             const empty = document.getElementById("emptyState");
             const table = document.getElementById("tableWrap");
+            const hasRows = !!tbody && tbody.querySelectorAll("tr").length > 0;
 
-            if (!history.length) {
+            if (!hasRows) {
                 empty.style.display = "block";
                 table.style.display = "none";
                 return;
             }
-
             empty.style.display = "none";
             table.style.display = "block";
-            tbody.innerHTML = "";
-
-            history.forEach(entry => {
-                const tr = document.createElement("tr");
-                tr.innerHTML = `
-                    <td>${entry.date || "—"}</td>
-                    <td>
-                        <span style="
-                            background:${entry.stage === 2 ? "rgba(245,200,66,0.1)" : "rgba(0,212,200,0.1)"};
-                            color:${entry.stage === 2 ? "#f5c842" : "var(--teal)"};
-                            padding:3px 10px; border-radius:50px; font-size:12px; font-weight:600;
-                        ">Stage ${entry.stage || 1}</span>
-                    </td>
-                    <td style="color:var(--text-2);">
-                        ${entry.age || "—"} / ${entry.gender ? entry.gender.charAt(0).toUpperCase() + entry.gender.slice(1) : "—"}
-                    </td>
-                    <td>${getRiskBadge(entry.diabetes?.risk || "—")}</td>
-                    <td>${getRiskBadge(entry.heart?.risk || "—")}</td>
-                    <td>${getRiskBadge(entry.bp?.risk || "—")}</td>
-                `;
-                tbody.appendChild(tr);
-            });
         }
 
-        function clearHistory() {
-            if (confirm("Are you sure you want to clear all history?")) {
-                localStorage.removeItem("lifeguard_history");
-                loadHistory();
+        async function clearHistory() {
+            if (!confirm("Are you sure you want to clear all history?")) return;
+            try {
+                const res = await fetch("/history/clear", { method: "POST" });
+                if (!res.ok) throw new Error("Failed to clear history");
+                window.location.reload();
+            } catch (e) {
+                console.error(e);
+                alert("Could not clear history. Please try again.");
             }
         }
 
-        document.addEventListener("DOMContentLoaded", loadHistory);
+        document.addEventListener("DOMContentLoaded", () => {
+            updateEmptyState();
+            applyStagePills();
+            applyRiskPills();
+        });
     </script>
 
 </body>

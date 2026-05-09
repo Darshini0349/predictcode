@@ -1,13 +1,13 @@
-import google.generativeai as genai
+from google import genai
 import os
 
 def get_client():
-    genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-    return genai.GenerativeModel("gemini-1.5-flash")
+    client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+    return client
 
 def get_advice(user_data, results):
     try:
-        model = get_client()
+        client = get_client()
 
         diabetes = results["diabetes"]
         heart    = results["heart"]
@@ -27,9 +27,9 @@ User Profile:
 - Diet: {user_data.get('diet_type')}
 
 Risk Scores:
-- Diabetes: {diabetes['total_score']} points → {diabetes['risk']}
-- Heart Disease: {heart['total_score']} points → {heart['risk']}
-- Blood Pressure: {bp['total_score']} points → {bp['risk']}
+- Diabetes: {diabetes['total_score']} points -> {diabetes['risk']}
+- Heart Disease: {heart['total_score']} points -> {heart['risk']}
+- Blood Pressure: {bp['total_score']} points -> {bp['risk']}
 
 Please provide:
 1. A brief summary of their overall health risk (2-3 sentences)
@@ -39,35 +39,51 @@ Please provide:
 
 Keep the language simple, friendly and encouraging.
 """
-        response = model.generate_content(prompt)
+        response = client.models.generate_content(
+            model="gemini-2.0-flash-lite",
+            contents=prompt
+        )
         return response.text
 
     except Exception as e:
-        print(f"Gemini API error: {e}")
+        print(f"Gemini advice error: {e}")
         return "Unable to generate advice at this time. Please check your API key."
 
 
 def chat_response(message, context):
     try:
-        model = get_client()
+        client = get_client()
+
+        diabetes_risk = "Unknown"
+        heart_risk    = "Unknown"
+        bp_risk       = "Unknown"
+
+        if context:
+            results = context.get("results", {})
+            if results:
+                diabetes_risk = results.get("diabetes", {}).get("risk", "Unknown")
+                heart_risk    = results.get("heart",    {}).get("risk", "Unknown")
+                bp_risk       = results.get("bp",       {}).get("risk", "Unknown")
 
         prompt = f"""
 You are LifeGuard AI, a friendly health assistant. The user has just received their disease risk prediction results.
 
-Their context:
-- Diabetes Risk: {context.get('diabetes', {}).get('risk', 'Unknown')}
-- Heart Disease Risk: {context.get('heart', {}).get('risk', 'Unknown')}
-- Blood Pressure Risk: {context.get('bp', {}).get('risk', 'Unknown')}
+Their risk levels:
+- Diabetes Risk: {diabetes_risk}
+- Heart Disease Risk: {heart_risk}
+- Blood Pressure Risk: {bp_risk}
 
-The user is now asking: {message}
+The user is asking: {message}
 
-Answer in a helpful, simple, and friendly way. Keep it short — max 3-4 sentences.
+Answer in a helpful, simple and friendly way in 3-4 sentences.
 Always remind them to consult a doctor for medical decisions.
 """
-        response = model.generate_content(prompt)
+        response = client.models.generate_content(
+            model="gemini-2.0-flash-lite",
+            contents=prompt
+        )
         return response.text
 
     except Exception as e:
         print(f"Gemini chat error: {e}")
         return "Sorry, I could not get a response right now."
-
