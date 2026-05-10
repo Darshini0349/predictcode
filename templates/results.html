@@ -70,9 +70,18 @@
         <!-- BREAKDOWN CHART -->
         <div class="chart-card">
             <h2>📊 Risk Factor Breakdown</h2>
-            <p style="color:var(--text-2);font-size:14px;margin-bottom:20px;">
-                See which lifestyle factors contributed most to your risk scores
+            <p style="color:var(--text-2);font-size:14px;margin-bottom:12px;line-height:1.55;">
+                Model <strong>points</strong> by bucket: <strong>Age</strong> (summary flag), <strong>Lifestyle</strong>
+                (habits, BMI, diet, symptoms, family history), <strong>Medical</strong> (Stage 2 labs/vitals only).
+                If <strong>Medical</strong> has no bars, those values did not add points under the current thresholds
+                (often because they are in normal ranges)—not a display bug.
             </p>
+            <p id="breakdownMedicalNote" style="display:none; font-size:13px; line-height:1.55; margin-bottom:16px;
+               padding:12px 14px; border-radius:var(--radius-md); background:var(--teal-glow);
+               border:1px solid rgba(0,212,200,0.25); color:var(--text-2);"></p>
+            <p id="breakdownMedicalSummary" style="display:none; font-size:13px; line-height:1.55; margin-bottom:16px;
+               padding:10px 14px; border-radius:var(--radius-md); background:var(--gold-dim);
+               border:1px solid rgba(245,200,66,0.35); color:var(--text-2);"></p>
             <canvas id="breakdownChart" height="100"></canvas>
         </div>
 
@@ -142,6 +151,7 @@
 
             const data = JSON.parse(raw);
             const results = data.results;
+            if (!results || !results.diabetes) return;
 
             // Set prediction context for chatbot + PDF
             window.PREDICTION_CONTEXT = data;
@@ -152,11 +162,55 @@
                 adviceEl.textContent = data.advice;
             }
 
+            const stage = Number(data.stage ?? results.stage ?? 1);
+            const medD = Number(results.diabetes.medical_score ?? 0);
+            const medH = Number(results.heart.medical_score ?? 0);
+            const medB = Number(results.bp.medical_score ?? 0);
+            const medicalTotal = medD + medH + medB;
+
+            const noteEl = document.getElementById("breakdownMedicalNote");
+            const summaryEl = document.getElementById("breakdownMedicalSummary");
+            if (noteEl) {
+                if (stage === 2 && medicalTotal === 0) {
+                    noteEl.style.display = "block";
+                    noteEl.textContent =
+                        "Stage 2: your BP, glucose, HbA1c, cholesterol, and heart rate did not add any extra " +
+                        "medical points in this model (they are inside the ranges that score 0). Your totals still " +
+                        "use lifestyle points above. Always follow your doctor’s advice about real-world targets.";
+                } else {
+                    noteEl.style.display = "none";
+                    noteEl.textContent = "";
+                }
+            }
+            if (summaryEl) {
+                if (stage === 2 && medicalTotal > 0) {
+                    summaryEl.style.display = "block";
+                    summaryEl.innerHTML =
+                        "<strong style=\"color:var(--gold);\">Medical points</strong> added from your labs/vitals " +
+                        "in this model — " +
+                        "Diabetes: <strong>+" + medD + "</strong> · " +
+                        "Heart: <strong>+" + medH + "</strong> · " +
+                        "BP: <strong>+" + medB + "</strong> " +
+                        "(see the <strong>Medical</strong> bars above).";
+                } else {
+                    summaryEl.style.display = "none";
+                    summaryEl.textContent = "";
+                }
+            }
+
             // Build factor breakdown data for chart
             window.FACTOR_BREAKDOWN = {
-                "Age": { diabetes: results.diabetes.lifestyle_score > 0 ? 1 : 0, heart: results.heart.lifestyle_score > 0 ? 1 : 0, bp: results.bp.lifestyle_score > 0 ? 1 : 0 },
-                "Lifestyle": { diabetes: results.diabetes.lifestyle_score, heart: results.heart.lifestyle_score, bp: results.bp.lifestyle_score },
-                "Medical": { diabetes: results.diabetes.medical_score || 0, heart: results.heart.medical_score || 0, bp: results.bp.medical_score || 0 },
+                "Age": {
+                    diabetes: results.diabetes.lifestyle_score > 0 ? 1 : 0,
+                    heart: results.heart.lifestyle_score > 0 ? 1 : 0,
+                    bp: results.bp.lifestyle_score > 0 ? 1 : 0,
+                },
+                "Lifestyle": {
+                    diabetes: Number(results.diabetes.lifestyle_score ?? 0),
+                    heart: Number(results.heart.lifestyle_score ?? 0),
+                    bp: Number(results.bp.lifestyle_score ?? 0),
+                },
+                "Medical": { diabetes: medD, heart: medH, bp: medB },
             };
 
             initRiskPies(results, data);

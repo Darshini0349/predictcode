@@ -302,7 +302,13 @@ function collectFormData(form) {
         } else if (el.type === "checkbox") {
             data[el.name] = el.checked;
         } else if (el.type === "number") {
-            data[el.name] = el.value ? parseFloat(el.value) : null;
+            const raw = el.value;
+            if (raw === "" || raw === null) {
+                data[el.name] = null;
+            } else {
+                const n = parseFloat(raw);
+                data[el.name] = Number.isFinite(n) ? n : null;
+            }
         } else {
             data[el.name] = el.value.trim();
         }
