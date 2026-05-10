@@ -1,14 +1,26 @@
 from google import genai
 import os
+import random
 
 def get_client():
-    client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+    # Collect all available keys
+    keys = [
+        os.getenv("AlzaSyAiowf4y3IZCML4wKna5_FIC1t7cXIPDC8"),
+    
+        os.getenv("AIzaSyChlJv8yxN7OyqLzZs2uPgf_A0Fx9EGui8"),
+        os.getenv("zaSyAj0z7Qprx8AprIwbEILtDC1zFEV_QVvKI"),
+        
+    ]
+    # Remove empty keys
+    valid_keys = [k for k in keys if k]
+    # Pick a random key
+    api_key = random.choice(valid_keys)
+    client  = genai.Client(api_key=api_key)
     return client
 
 def get_advice(user_data, results):
     try:
-        client = get_client()
-
+        client   = get_client()
         diabetes = results["diabetes"]
         heart    = results["heart"]
         bp       = results["bp"]
@@ -40,14 +52,14 @@ Please provide:
 Keep the language simple, friendly and encouraging.
 """
         response = client.models.generate_content(
-            model="gemini-2.0-flash-lite",
+            model="gemini-1.5-flash",
             contents=prompt
         )
         return response.text
 
     except Exception as e:
         print(f"Gemini advice error: {e}")
-        return "Unable to generate advice at this time. Please check your API key."
+        return "Unable to generate advice at this time."
 
 
 def chat_response(message, context):
@@ -79,7 +91,7 @@ Answer in a helpful, simple and friendly way in 3-4 sentences.
 Always remind them to consult a doctor for medical decisions.
 """
         response = client.models.generate_content(
-            model="gemini-2.0-flash-lite",
+            model="gemini-1.5-flash",
             contents=prompt
         )
         return response.text
