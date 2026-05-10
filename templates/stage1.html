@@ -94,10 +94,12 @@
                         <div class="form-group">
                             <label class="form-label">Height & Weight (for BMI)</label>
                             <div class="bmi-row">
-                                <input type="number" id="height" name="height" class="form-input"
-                                    placeholder="Height (cm)" min="100" max="250">
-                                <input type="number" id="weight" name="weight" class="form-input"
-                                    placeholder="Weight (kg)" min="20" max="300">
+                               <input type="number" id="height" name="height" class="form-input"
+                                 placeholder="Height (cm)" min="60" max="280" required>
+
+                               <input type="number" id="weight" name="weight" class="form-input"
+                                placeholder="Weight (kg)" min="10" max="700" required>
+
                             </div>
                             <div id="bmiCategory" class="bmi-result"></div>
                             <input type="hidden" id="bmi" name="bmi">
