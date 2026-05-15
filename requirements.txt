@@ -1,4 +1,7 @@
 flask
+gunicorn
 python-dotenv
-anthropic
+google-genai
+
+
 fpdf2
